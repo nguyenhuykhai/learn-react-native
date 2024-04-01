@@ -5,9 +5,19 @@ import InputTodo from './component/InputTodo';
 
 export default function App() {
   const [todo, setTodo] = useState([]);
+  const [isAddMode, setIsAddMode] = useState(false);
+
+  function startAddTodoHandler() {
+    setIsAddMode(true);
+  }
+
+  function cancelAddTodoHandler() {
+    setIsAddMode(false);
+  }
 
   function handleAddTodo(enterText) {
     setTodo(todo => [...todo, { id: Math.random().toString(), text: enterText }]);
+    setIsAddMode(false);
   }
 
   function handleDeleteItem(id) {
@@ -18,7 +28,8 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <InputTodo onAddTodo={handleAddTodo} />
+      <Button title='Add Todo' onPress={startAddTodoHandler}/>
+      <InputTodo visible={isAddMode} cancelAddTodo={cancelAddTodoHandler} onAddTodo={handleAddTodo} />
       <View style={styles.listContainer}>
         <Text style={{ paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: '#cccccc' }}>Todo list...</Text>
         <FlatList data={todo} renderItem={(itemData) => {

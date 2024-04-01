@@ -2,23 +2,30 @@ import { StyleSheet, Text, View, Pressable } from 'react-native';
 
 export default function ListTodo(props) {
     return (
-        <Pressable onPress={props.onDeleteTodo.bind(this, props.id)}>
-            <View style={styles.itemTodo}>
+        <View style={styles.itemTodo}>
+            <Pressable
+                android_ripple={{ color: '#024c8e' }}
+                onPress={props.onDeleteTodo.bind(this, props.id)}
+                style={({ pressed }) => pressed && styles.pressed }
+            >
                 <Text style={styles.itemText}>{props.text}</Text>
-            </View>
-        </Pressable>
+            </Pressable>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
     itemTodo: {
         marginTop: 10,
-        padding: 10,
         height: 44,
         backgroundColor: '#0081f1',
         borderRadius: 5,
     },
     itemText: {
         color: '#ffffff',
+        padding: 10,
+    },
+    pressed: {
+        opacity: 0.5,
     }
 });
