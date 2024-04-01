@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, FlatList } from 'react-native';
 
 export default function App() {
   const [todo, setTodo] = useState([]);
@@ -11,21 +11,28 @@ export default function App() {
   }
 
   function handleAddTodo() {
-    setTodo(todo => [...todo, enterText]);
-    setEnterText('');
+    setTodo(todo => [...todo, { id: Math.random().toString(), text: enterText }]);
+    // setEnterText('');
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <TextInput style={{ width: '70%', padding: 8, marginRight: 2, borderWidth: 1, borderColor: '#cccccc' }} value={enterText} placeholder='Input your todo list' onChangeText={handleExterText}/>
-        <Button title='Add Todo' onPress={handleAddTodo}/>
+        <TextInput style={{ width: '70%', padding: 8, marginRight: 2, borderWidth: 1, borderColor: '#cccccc' }} value={enterText} placeholder='Input your todo list' onChangeText={handleExterText} />
+        <Button title='Add Todo' onPress={handleAddTodo} />
       </View>
       <View style={styles.listContainer}>
-        <Text style={{ paddingBottom:10, borderBottomWidth:2, borderBottomColor: '#cccccc' }}>Todo list...</Text>
-        {todo.map((item, index) => (
-            <Text key={index} style={styles.itemTodo}>{item}</Text>
-        ))}
+        <Text style={{ paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: '#cccccc' }}>Todo list...</Text>
+        <FlatList data={todo} renderItem={(itemData) => {
+          return (
+            <View style={styles.itemTodo}>
+              <Text style={styles.itemText}>{itemData.item.text}</Text>
+            </View>
+          )
+        }}
+          alwaysBounceVertical={false}
+          keyExtractor={(item) => item.id}
+        />
       </View>
     </View>
   );
@@ -50,7 +57,13 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   itemTodo: {
-    paddingTop: 10,
+    marginTop: 10,
+    padding: 10,
     height: 44,
+    backgroundColor: '#0081f1',
+    borderRadius: 5,
   },
+  itemText: {
+    color: '#ffffff',
+  }
 });
