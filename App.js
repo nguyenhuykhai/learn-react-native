@@ -28,7 +28,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Button title='Add Todo' onPress={startAddTodoHandler}/>
+      <Button title='Add Todo' color="#3340F2" onPress={startAddTodoHandler}/>
       <InputTodo visible={isAddMode} cancelAddTodo={cancelAddTodoHandler} onAddTodo={handleAddTodo} />
       <View style={styles.listContainer}>
         <Text style={{ paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: '#cccccc' }}>Todo list...</Text>
@@ -48,7 +48,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     paddingTop: 50,
     paddingHorizontal: 20,
   },

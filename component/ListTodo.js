@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     itemTodo: {
         marginTop: 10,
         height: 44,
-        backgroundColor: '#0081f1',
+        backgroundColor: '#3340F2',
         borderRadius: 5,
     },
     itemText: {
