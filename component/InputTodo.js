@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     image: {
-        height: 121,
+        height: 122,
         width: 150,
         padding: 20,
         margin: 20,
