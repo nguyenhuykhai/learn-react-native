@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, FlatList } from 'react-native';
+import { StyleSheet, ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import ListTodo from './component/ListTodo';
 import InputTodo from './component/InputTodo';
+
+import StartGameScreen from './screens/StartGameScreen';
 
 export default function App() {
   const [todo, setTodo] = useState([]);
@@ -27,31 +30,24 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      <Button title='Add Todo' color="#3340F2" onPress={startAddTodoHandler}/>
-      <InputTodo visible={isAddMode} cancelAddTodo={cancelAddTodoHandler} onAddTodo={handleAddTodo} />
-      <View style={styles.listContainer}>
-        <Text style={{ paddingBottom: 10, borderBottomWidth: 2, borderBottomColor: '#cccccc' }}>Todo list...</Text>
-        <FlatList data={todo} renderItem={(itemData) => {
-          return (
-            <ListTodo id={itemData.item.id} text={itemData.item.text} onDeleteTodo={handleDeleteItem}/>
-          )
-        }}
-          alwaysBounceVertical={false}
-          keyExtractor={(item) => item.id}
-        />
-      </View>
-    </View>
+    <LinearGradient colors={['#4e0329', '#ddb52f']} style={styles.rootScreen}>
+      <ImageBackground
+        source={require('./assets/images/background.png')}
+        resizeMode='cover'
+        style={styles.rootScreen}
+        imageStyle={styles.backgroundImage}
+      >
+        <StartGameScreen />
+      </ImageBackground>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootScreen: {
     flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 20,
   },
-  listContainer: {
-    marginVertical: 10,
-  }
+  backgroundImage: {
+    opacity: 0.15,
+  },
 });
