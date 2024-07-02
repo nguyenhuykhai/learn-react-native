@@ -1,20 +1,16 @@
 {
   "expo": {
-    "name": "ReactNativeApp",
-    "slug": "ReactNativeApp",
+    "name": "SE161766-ASM3",
+    "slug": "SE161766-ASM3",
     "version": "1.0.0",
-    "orientation": "default",
+    "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "backgroundColor": "#24180f",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
       "supportsTablet": true
     },
