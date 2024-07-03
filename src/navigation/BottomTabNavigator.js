@@ -37,7 +37,7 @@ const FavoriteStack = () => (
   </Stack.Navigator>
 );
 
-const BottomTabs = () => {
+const BottomTabNavigator = () => {
   return (
     <NavigationContainer>
       <Tab.Navigator screenOptions={{ headerShown: false }}>
@@ -57,4 +57,4 @@ const BottomTabs = () => {
   );
 };
 
-export default BottomTabs;
+export default BottomTabNavigator;

@@ -12,6 +12,7 @@ import axios from 'axios';
 import { getCategories } from "../api/apiService";
 import { useGlobalState } from "../context/GlobalStateContext";
 import { Ionicons, AntDesign, MaterialIcons } from "@expo/vector-icons";
+import { BASE_URL } from "../api/apiService";
 
 const HomeScreen = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
@@ -25,7 +26,7 @@ const HomeScreen = ({ navigation }) => {
 
   const handleDeleteCategory = async (categoryId) => {
     try {
-      await axios.delete(`https://66755190a8d2b4d072ef8980.mockapi.io/Categories/${categoryId}`);
+      await axios.delete(`${BASE_URL}/Categories/${categoryId}`);
       triggerRefresh();
     } catch (error) {
       console.error('Error deleting category:', error);

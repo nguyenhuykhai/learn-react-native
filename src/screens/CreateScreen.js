@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, ScrollView } from 'react-native';
 import axios from 'axios';
 import { useGlobalState } from '../context/GlobalStateContext';
+import ValidatedInput from '../components/ValidatedInput';
+import { validate } from '../utils/validation';
+import { BASE_URL } from '../api/apiService';
 
 const CreateScreen = ({ route, navigation }) => {
   const { category } = route.params;
@@ -20,43 +23,60 @@ const CreateScreen = ({ route, navigation }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const { triggerRefresh } = useGlobalState();
 
-  const validate = () => {
-    let valid = true;
-    let errors = {};
+  const validationRules = {
+    name: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Name is required' }],
+    weight: [
+      { condition: (value) => value !== null && value !== undefined && value !== '', message: 'Weight is required' },
+      { condition: (value) => value > 0, message: 'Weight must be a positive number' }
+    ],
+    rating: [
+      { condition: (value) => value !== null && value !== undefined && value !== '', message: 'Rating is required' },
+      { condition: (value) => value > 0 && value <= 5, message: 'Rating must be between 1 and 5' }
+    ],
+    price: [
+      { condition: (value) => value !== null && value !== undefined && value !== '', message: 'Price is required' },
+      { condition: (value) => value > 0, message: 'Price must be a positive number' }
+    ],
+    image: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Image URL is required' }],
+    color: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Color is required' }],
+    origin: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Origin is required' }]
+  };
 
-    if (!newOrchid.name) {
-      valid = false;
-      errors.name = "Name is required";
-    }
-    if (!newOrchid.weight || newOrchid.weight <= 0) {
-      valid = false;
-      errors.weight = "Weight must be a positive number";
-    }
-    if (!newOrchid.rating || newOrchid.rating <= 0 || newOrchid.rating > 5) {
-      valid = false;
-      errors.rating = "Rating must be between 1 and 5";
-    }
-    if (!newOrchid.price || newOrchid.price <= 0) {
-      valid = false;
-      errors.price = "Price must be a positive number";
-    }
-    if (!newOrchid.image) {
-      valid = false;
-      errors.image = "Image URL is required";
-    }
-    if (!newOrchid.color) {
-      valid = false;
-      errors.color = "Color is required";
-    }
-    if (!newOrchid.origin) {
-      valid = false;
-      errors.origin = "Origin is required";
-    }
+  const handleCreateOrchid = async () => {
+    const { isValid, errors } = validate(newOrchid, validationRules);
 
-    setErrors(errors);
-    return valid;
+    if (isValid) {
+      try {
+        const updatedCategory = {
+          ...category,
+          items: [...category.items, newOrchid],
+        };
+        const response = await axios.put(`${BASE_URL}/Categories/${category.id}`, updatedCategory);
+        if (response.status === 200) {
+          triggerRefresh();
+          confirmAlert("Success", "Orchid created successfully.");
+        } else {
+          confirmAlert("Error", "Error updating orchid. Please try again.");
+          console.error('Error updating category:', response);
+        }
+      } catch (error) {
+        confirmAlert("Error", "Error creating orchid. Please try again.");
+        console.error('Error creating orchid:', error);
+      }
+    } else {
+      setErrors(errors);
+      Alert.alert("Validation Error", "Please fix the errors before submitting.");
+    }
+  };
+
+  const handleInputChange = (key, value) => {
+    setNewOrchid({
+      ...newOrchid,
+      [key]: key === 'weight' || key === 'rating' || key === 'price' ? (value ? parseFloat(value) : '') : value
+    });
   };
 
   const confirmAlert = (header, message) => {
@@ -76,91 +96,72 @@ const CreateScreen = ({ route, navigation }) => {
     );
   };
 
-  const handleCreateOrchid = async () => {
-    if (validate()) {
-      try {
-        const updatedCategory = {
-          ...category,
-          items: [...category.items, newOrchid],
-        };
-        const response = await axios.put(`https://66755190a8d2b4d072ef8980.mockapi.io/Categories/${category.id}`, updatedCategory);
-        if (response.status === 200) {
-          triggerRefresh();
-          confirmAlert("Success", "Orchid created successfully.");
-        } else {
-          confirmAlert("Error", "Error updating orchid. Please try again.");
-          console.error('Error updating category:', response);
-        }
-      } catch (error) {
-        confirmAlert("Error", "Error creating orchid. Please try again.");
-        console.error('Error creating orchid:', error);
-      }
-    } else {
-      Alert.alert("Validation Error", "Please fix the errors before submitting.");
-    }
-  };
-
   return (
     <ScrollView style={styles.container}>
-      <TextInput
-        placeholder="Name"
+      <ValidatedInput
+        label="Name"
         value={newOrchid.name}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, name: text })}
-        style={styles.input}
+        onChange={(text) => handleInputChange('name', text)}
+        placeholder="Enter name"
+        validationRules={validationRules.name}
       />
-      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-      <TextInput
-        placeholder="Weight"
-        value={newOrchid.weight.toString()}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, weight: parseFloat(text) })}
-        style={styles.input}
+      <ValidatedInput
+        label="Weight"
+        value={newOrchid.weight != null ? newOrchid.weight.toString() : ''}
+        onChange={(text) => handleInputChange('weight', text)}
+        placeholder="Enter weight"
         keyboardType="numeric"
+        validationRules={validationRules.weight}
       />
-      {errors.weight && <Text style={styles.errorText}>{errors.weight}</Text>}
-      <TextInput
-        placeholder="Rating"
-        value={newOrchid.rating.toString()}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, rating: parseFloat(text) })}
-        style={styles.input}
+      <ValidatedInput
+        label="Rating"
+        value={newOrchid.rating != null ? newOrchid.rating.toString() : ''}
+        onChange={(text) => handleInputChange('rating', text)}
+        placeholder="Enter rating"
         keyboardType="numeric"
+        validationRules={validationRules.rating}
       />
-      {errors.rating && <Text style={styles.errorText}>{errors.rating}</Text>}
-      <TextInput
-        placeholder="Price"
-        value={newOrchid.price.toString()}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, price: parseFloat(text) })}
-        style={styles.input}
+      <ValidatedInput
+        label="Price"
+        value={newOrchid.price != null ? newOrchid.price.toString() : ''}
+        onChange={(text) => handleInputChange('price', text)}
+        placeholder="Enter price"
         keyboardType="numeric"
+        validationRules={validationRules.price}
       />
-      {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
-      <TextInput
-        placeholder="Image URL"
+      <ValidatedInput
+        label="Image URL"
         value={newOrchid.image}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, image: text })}
-        style={styles.input}
+        onChange={(text) => handleInputChange('image', text)}
+        placeholder="Enter image URL"
+        validationRules={validationRules.image}
       />
-      {errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
-      <TextInput
-        placeholder="Color"
+      <ValidatedInput
+        label="Color"
         value={newOrchid.color}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, color: text })}
-        style={styles.input}
+        onChange={(text) => handleInputChange('color', text)}
+        placeholder="Enter color"
+        validationRules={validationRules.color}
       />
-      {errors.color && <Text style={styles.errorText}>{errors.color}</Text>}
-      <TextInput
-        placeholder="Bonus"
-        value={newOrchid.bonus}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, bonus: text })}
-        style={styles.input}
+      <ValidatedInput
+        label="Bonus"
+        value={newOrchid.bonus != null ? newOrchid.bonus.toString() : ''}
+        onChange={(text) => handleInputChange('bonus', text)}
+        placeholder="Enter bonus"
       />
-      <TextInput
-        placeholder="Origin"
+      <ValidatedInput
+        label="Origin"
         value={newOrchid.origin}
-        onChangeText={(text) => setNewOrchid({ ...newOrchid, origin: text })}
-        style={styles.input}
+        onChange={(text) => handleInputChange('origin', text)}
+        placeholder="Enter origin"
+        validationRules={validationRules.origin}
       />
-      {errors.origin && <Text style={styles.errorText}>{errors.origin}</Text>}
-      <Button title="Create Orchid" onPress={handleCreateOrchid} />
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <Button title="Create Orchid" onPress={handleCreateOrchid} />
+      )}
       <View style={styles.block}></View>
     </ScrollView>
   );

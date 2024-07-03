@@ -1,7 +1,7 @@
 import React from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 import Header from "./src/components/Header";
-import BottomTabs from "./src/navigation/BottomTabs";
+import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
 import { GlobalStateProvider } from "./src/context/GlobalStateContext";
 
 const App = () => {
@@ -9,7 +9,7 @@ const App = () => {
     <GlobalStateProvider>
       <SafeAreaView style={styles.container}>
         <Header />
-        <BottomTabs />
+        <BottomTabNavigator />
       </SafeAreaView>
     </GlobalStateProvider>
   );

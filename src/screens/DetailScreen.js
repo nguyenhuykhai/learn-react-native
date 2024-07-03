@@ -13,6 +13,7 @@ import axios from "axios";
 import OrchidItem from "../components/OrchildItem";
 import { Ionicons, AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { useGlobalState } from "../context/GlobalStateContext";
+import { BASE_URL } from "../api/apiService";
 
 const DetailScreen = ({ route, navigation }) => {
   const { item, detailItem } = route.params;
@@ -32,7 +33,7 @@ const DetailScreen = ({ route, navigation }) => {
         items: item.items.filter((orchid) => orchid.id !== orchidId),
       };
       await axios.put(
-        `https://66755190a8d2b4d072ef8980.mockapi.io/Categories/${item.id}`,
+        `${BASE_URL}/Categories/${item.id}`,
         updateCategory
       );
       item.items = item.items.filter((orchid) => orchid.id !== orchidId);

@@ -4,6 +4,7 @@ import axios from 'axios';
 import OrchidFavoriteItem from '../components/OrchidFavoriteItem';
 import { useGlobalState } from '../context/GlobalStateContext';
 import { getCategories } from '../api/apiService';
+import { BASE_URL } from '../api/apiService';
 
 const FavoriteScreen = ({ route, navigation }) => {
   const [favorites, setFavorites] = useState([]);
@@ -25,7 +26,7 @@ const FavoriteScreen = ({ route, navigation }) => {
     );
 
     try {
-      await axios.put(`https://66755190a8d2b4d072ef8980.mockapi.io/Categories/${selectCategory.id}`, {
+      await axios.put(`${BASE_URL}/Categories/${selectCategory.id}`, {
         ...selectCategory,
         items: updatedItems
       });

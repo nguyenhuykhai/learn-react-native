@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { useGlobalState } from '../context/GlobalStateContext';
+import ValidatedInput from '../components/ValidatedInput';
+import { validate } from '../utils/validation';
+import { BASE_URL } from '../api/apiService';
 
 const CreateCategoryScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -17,154 +20,135 @@ const CreateCategoryScreen = ({ navigation }) => {
     origin: ''
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const { triggerRefresh } = useGlobalState();
 
-  const validate = () => {
-    let valid = true;
-    let errors = {};
-
-    if (!name) {
-      valid = false;
-      errors.name = "Category name is required";
-    }
-    if (!item.name) {
-      valid = false;
-      errors.itemName = "Item name is required";
-    }
-    if (!item.weight || item.weight <= 0) {
-      valid = false;
-      errors.weight = "Weight must be a positive number";
-    }
-    if (!item.rating || item.rating <= 0 || item.rating > 5) {
-      valid = false;
-      errors.rating = "Rating must be between 1 and 5";
-    }
-    if (!item.price || item.price <= 0) {
-      valid = false;
-      errors.price = "Price must be a positive number";
-    }
-    if (!item.image) {
-      valid = false;
-      errors.image = "Image URL is required";
-    }
-    if (!item.color) {
-      valid = false;
-      errors.color = "Color is required";
-    }
-    if (!item.origin) {
-      valid = false;
-      errors.origin = "Origin is required";
-    }
-
-    setErrors(errors);
-    return valid;
-  };
+  const validationRules = {
+    name: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Category name is required' }],
+    itemName: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Item name is required' }],
+    weight: [
+      { condition: (value) => value !== null && value !== undefined && value !== '', message: 'Weight is required' },
+      { condition: (value) => value > 0, message: 'Weight must be a positive number' }
+    ],
+    rating: [
+      { condition: (value) => value !== null && value !== undefined && value !== '', message: 'Rating is required' },
+      { condition: (value) => value > 0 && value <= 5, message: 'Rating must be between 1 and 5' }
+    ],
+    price: [
+      { condition: (value) => value !== null && value !== undefined && value !== '', message: 'Price is required' },
+      { condition: (value) => value > 0, message: 'Price must be a positive number' }
+    ],
+    image: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Image URL is required' }],
+    color: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Color is required' }],
+    origin: [{ condition: (value) => value !== null && value !== undefined && value !== '', message: 'Origin is required' }]
+  };  
 
   const handleCreateCategory = async () => {
-    if (validate()) {
+    const { isValid, errors } = validate({ name, ...item, itemName: item.name }, validationRules);
+
+    if (isValid) {
       const newCategory = {
         name,
         items: [item]
       };
 
       try {
-        await axios.post('https://66755190a8d2b4d072ef8980.mockapi.io/Categories', newCategory);
+        setLoading(true);
+        await axios.post(`${BASE_URL}/Categories`, newCategory);
         triggerRefresh();
         navigation.goBack();
       } catch (error) {
         console.error('Error creating category:', error);
+        Alert.alert("Error", "An error occurred while creating the category.");
+      } finally {
+        setLoading(false);
       }
     } else {
+      setErrors(errors);
       Alert.alert("Validation Error", "Please fix the errors before submitting.");
     }
   };
 
+  const handleInputChange = (key, value) => {
+    setItem({
+      ...item,
+      [key]: key === 'weight' || key === 'rating' || key === 'price' ? (value ? parseFloat(value) : '') : value
+    });
+  };
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.label}>Category Name:</Text>
-      <TextInput
-        style={styles.input}
+      <ValidatedInput
+        label="Category Name"
         value={name}
-        onChangeText={setName}
+        onChange={setName}
         placeholder="Enter category name"
+        validationRules={validationRules.name}
       />
-      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-
-      <Text style={styles.label}>Item Name:</Text>
-      <TextInput
-        style={styles.input}
+      <ValidatedInput
+        label="Item Name"
         value={item.name}
-        onChangeText={(text) => setItem({ ...item, name: text })}
+        onChange={(text) => handleInputChange('name', text)}
         placeholder="Enter item name"
+        validationRules={validationRules.itemName}
       />
-      {errors.itemName && <Text style={styles.errorText}>{errors.itemName}</Text>}
-
-      <Text style={styles.label}>Weight:</Text>
-      <TextInput
-        style={styles.input}
-        value={item.weight.toString()}
-        onChangeText={(text) => setItem({ ...item, weight: parseFloat(text) })}
+      <ValidatedInput
+        label="Weight"
+        value={item.weight != null ? item.weight.toString() : ''}
+        onChange={(text) => handleInputChange('weight', text)}
         placeholder="Enter item weight"
         keyboardType="numeric"
+        validationRules={validationRules.weight}
       />
-      {errors.weight && <Text style={styles.errorText}>{errors.weight}</Text>}
-
-      <Text style={styles.label}>Rating:</Text>
-      <TextInput
-        style={styles.input}
-        value={item.rating.toString()}
-        onChangeText={(text) => setItem({ ...item, rating: parseFloat(text) })}
+      <ValidatedInput
+        label="Rating"
+        value={item.rating != null ? item.rating.toString() : ''}
+        onChange={(text) => handleInputChange('rating', text)}
         placeholder="Enter item rating"
         keyboardType="numeric"
+        validationRules={validationRules.rating}
       />
-      {errors.rating && <Text style={styles.errorText}>{errors.rating}</Text>}
-
-      <Text style={styles.label}>Price:</Text>
-      <TextInput
-        style={styles.input}
-        value={item.price.toString()}
-        onChangeText={(text) => setItem({ ...item, price: parseFloat(text) })}
+      <ValidatedInput
+        label="Price"
+        value={item.price != null ? item.price.toString() : ''}
+        onChange={(text) => handleInputChange('price', text)}
         placeholder="Enter item price"
         keyboardType="numeric"
+        validationRules={validationRules.price}
       />
-      {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
-
-      <Text style={styles.label}>Image URL:</Text>
-      <TextInput
-        style={styles.input}
+      <ValidatedInput
+        label="Image URL"
         value={item.image}
-        onChangeText={(text) => setItem({ ...item, image: text })}
+        onChange={(text) => handleInputChange('image', text)}
         placeholder="Enter item image URL"
+        validationRules={validationRules.image}
       />
-      {errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
-
-      <Text style={styles.label}>Color:</Text>
-      <TextInput
-        style={styles.input}
+      <ValidatedInput
+        label="Color"
         value={item.color}
-        onChangeText={(text) => setItem({ ...item, color: text })}
+        onChange={(text) => handleInputChange('color', text)}
         placeholder="Enter item color"
+        validationRules={validationRules.color}
       />
-      {errors.color && <Text style={styles.errorText}>{errors.color}</Text>}
-
-      <Text style={styles.label}>Bonus:</Text>
-      <TextInput
-        style={styles.input}
-        value={item.bonus}
-        onChangeText={(text) => setItem({ ...item, bonus: text })}
+      <ValidatedInput
+        label="Bonus"
+        value={item.bonus !== '' ? item.bonus : ''}
+        onChange={(text) => handleInputChange('bonus', text)}
         placeholder="Enter item bonus"
       />
-
-      <Text style={styles.label}>Origin:</Text>
-      <TextInput
-        style={styles.input}
+      <ValidatedInput
+        label="Origin"
         value={item.origin}
-        onChangeText={(text) => setItem({ ...item, origin: text })}
+        onChange={(text) => handleInputChange('origin', text)}
         placeholder="Enter item origin"
+        validationRules={validationRules.origin}
       />
-      {errors.origin && <Text style={styles.errorText}>{errors.origin}</Text>}
 
-      <Button title="Create Category" onPress={handleCreateCategory} />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <Button title="Create Category" onPress={handleCreateCategory} />
+      )}
       <View style={styles.block}></View>
     </ScrollView>
   );
@@ -173,21 +157,6 @@ const CreateCategoryScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
   },
   block: {
     height: 30,
