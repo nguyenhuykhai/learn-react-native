@@ -1,10 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import axios from 'axios';
-import OrchidFavoriteItem from '../components/OrchidFavoriteItem';
-import { useGlobalState } from '../context/GlobalStateContext';
-import { getCategories } from '../api/apiService';
-import { BASE_URL } from '../api/apiService';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import OrchidFavoriteItem from "../components/OrchidFavoriteItem";
+import { useGlobalState } from "../context/GlobalStateContext";
+import { getCategories } from "../api/apiService";
+import { BASE_URL } from "../api/apiService";
 
 const FavoriteScreen = ({ route, navigation }) => {
   const [favorites, setFavorites] = useState([]);
@@ -12,36 +20,54 @@ const FavoriteScreen = ({ route, navigation }) => {
   const { isRefresh, triggerRefresh } = useGlobalState();
 
   useEffect(() => {
-    getCategories().then(response => {
+    getCategories().then((response) => {
       setCategories(response.data);
-      handleGetFavorites(response.data);
+      loadFavorites(response.data);
     });
   }, [isRefresh]);
 
-  const toggleFavorite = async (orchid) => {
-    const updatedOrchid = { ...orchid, isFavorite: !orchid.isFavorite };
-    const selectCategory = categories.find(category => category.items.some(item => item.id === updatedOrchid.id));
-    const updatedItems = selectCategory.items.map(item =>
-      item.id === updatedOrchid.id ? updatedOrchid : item
-    );
-
+  const loadFavorites = async (categories) => {
     try {
-      await axios.put(`${BASE_URL}/Categories/${selectCategory.id}`, {
-        ...selectCategory,
-        items: updatedItems
-      });
-      triggerRefresh();
+      const favoriteIds = await AsyncStorage.getItem("favorites");
+      if (favoriteIds) {
+        const favoriteIdsArray = JSON.parse(favoriteIds);
+        const favoriteItems = categories.reduce((acc, category) => {
+          const items = category.items.filter((item) =>
+            favoriteIdsArray.includes(item.id)
+          );
+          return [...acc, ...items];
+        }, []);
+        setFavorites(favoriteItems);
+      } else {
+        setFavorites([]);
+      }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error("Error loading favorites from AsyncStorage:", error);
     }
   };
 
-  const handleGetFavorites = (categories) => {
-    const favorites = categories.reduce((acc, category) => {
-      const items = category.items.filter(item => item.isFavorite);
-      return [...acc, ...items];
-    }, []);
-    setFavorites(favorites);
+  const saveFavorites = async (favoriteIds) => {
+    try {
+      await AsyncStorage.setItem("favorites", JSON.stringify(favoriteIds));
+      triggerRefresh();
+    } catch (error) {
+      console.error("Error saving favorites to AsyncStorage:", error);
+    }
+  };
+
+  const toggleFavorite = async (orchid) => {
+    try {
+      const favoriteIds = await AsyncStorage.getItem("favorites");
+      let favoriteIdsArray = favoriteIds ? JSON.parse(favoriteIds) : [];
+      if (favoriteIdsArray.includes(orchid.id)) {
+        favoriteIdsArray = favoriteIdsArray.filter((id) => id !== orchid.id);
+      } else {
+        favoriteIdsArray.push(orchid.id);
+      }
+      await saveFavorites(favoriteIdsArray);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
   };
 
   const confirmToggleFavorite = (orchid) => {
@@ -51,12 +77,12 @@ const FavoriteScreen = ({ route, navigation }) => {
       [
         {
           text: "Cancel",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "OK",
-          onPress: () => toggleFavorite(orchid)
-        }
+          onPress: () => toggleFavorite(orchid),
+        },
       ]
     );
   };

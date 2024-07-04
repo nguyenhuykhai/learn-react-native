@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import axios from 'axios';
+import uuid from 'react-native-uuid';
 import { useGlobalState } from '../context/GlobalStateContext';
 import ValidatedInput from '../components/ValidatedInput';
 import { validate } from '../utils/validation';
@@ -9,7 +10,7 @@ import { BASE_URL } from '../api/apiService';
 const CreateScreen = ({ route, navigation }) => {
   const { category } = route.params;
   const [newOrchid, setNewOrchid] = useState({
-    id: category.items.length + 1,
+    id: uuid.v4(), // Using react-native-uuid for ID generation
     name: "",
     weight: 0,
     rating: 0,
@@ -18,8 +19,7 @@ const CreateScreen = ({ route, navigation }) => {
     image: "",
     color: "",
     bonus: "",
-    origin: "",
-    isFavorite: false
+    origin: ""
   });
 
   const [errors, setErrors] = useState({});

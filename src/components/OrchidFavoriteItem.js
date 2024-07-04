@@ -1,39 +1,35 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const OrchidFavoriteItem = ({ categories, item, onToggleFavorite, navigation }) => {
-  const [selectCategory, setSelectCategory] = useState(null);
   const handleSelectCategory = (category) => {
     categories.forEach(categoryItem => {
       categoryItem.items.forEach(item => {
         if (item.id === category.id) {
-          setSelectCategory(categoryItem);
           navigation.navigate('Detail', { item: categoryItem, detailItem: category });
         }
       });
     });
-    // navigation.navigate('Detail', { item, detailItem: item.items[0] })}
   }
 
   return (
     <TouchableOpacity onPress={() => handleSelectCategory(item)}>
-    <View style={styles.item}>
-      <View style={styles.itemContent}>
-        <Image source={{ uri: item.image }} style={styles.itemImage} />
-        <Text style={styles.itemName}>{item.name}</Text>
+      <View style={styles.item}>
+        <View style={styles.itemContent}>
+          <Image source={{ uri: item.image }} style={styles.itemImage} />
+          <Text style={styles.itemName}>{item.name}</Text>
+        </View>
+        <View style={styles.btn}>
+          <TouchableOpacity
+            onPress={onToggleFavorite}
+            style={styles.btnClickContain}>
+            <View style={styles.btnContainer}>
+              <MaterialIcons name="favorite" size={24} color="red" />
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.btn}>
-        <TouchableOpacity
-          onPress={onToggleFavorite}
-          style={styles.btnClickContain} >
-          <View
-            style={styles.btnContainer}>
-            <MaterialIcons name={item.isFavorite ? "favorite" : "favorite-border"} size={24} color="red" />
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
     </TouchableOpacity>
   );
 };

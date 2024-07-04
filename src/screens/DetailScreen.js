@@ -5,68 +5,62 @@ import {
   Image,
   StyleSheet,
   FlatList,
-  Button,
   TouchableOpacity,
   Alert,
 } from "react-native";
-import axios from "axios";
-import OrchidItem from "../components/OrchildItem";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, AntDesign, MaterialIcons } from "@expo/vector-icons";
+import OrchidItem from "../components/OrchildItem";
 import { useGlobalState } from "../context/GlobalStateContext";
+import axios from "axios";
 import { BASE_URL } from "../api/apiService";
 
 const DetailScreen = ({ route, navigation }) => {
   const { item, detailItem } = route.params;
   const [selectItem, setSelectItem] = useState(null);
   const [originalData, setOrginalData] = useState(null);
-  const { triggerRefresh } = useGlobalState();
+  const { isRefresh, triggerRefresh } = useGlobalState();
+  const [loading, setLoading] = useState(true);
+  const [listFavorites, setListFavorites] = useState([]);
 
   useEffect(() => {
     setSelectItem(detailItem);
     setOrginalData(item);
+    loadFavorites(detailItem);
   }, [item, detailItem]);
 
-  const handleDeleteOrchid = async (orchidId) => {
+  const loadFavorites = async () => {
     try {
-      const updateCategory = {
-        ...item,
-        items: item.items.filter((orchid) => orchid.id !== orchidId),
-      };
-      await axios.put(
-        `${BASE_URL}/Categories/${item.id}`,
-        updateCategory
-      );
-      item.items = item.items.filter((orchid) => orchid.id !== orchidId);
-      setSelectItem(item.items[0] || null);
-      triggerRefresh();
+      const favorites = await AsyncStorage.getItem("favorites");
+      if (favorites) {
+        setListFavorites(JSON.parse(favorites));
+      } else {
+        setListFavorites([]);
+      }
+      setLoading(false);
     } catch (error) {
-      console.error("Error deleting orchid:", error);
+      console.error("Error loading favorites from AsyncStorage:", error);
     }
   };
 
-  const toggleFavorite = async (orchid) => {
-    const updateOrginalData = {
-      ...originalData,
-      items: originalData.items.map((item) => {
-        if (item.id === orchid.id) {
-          return { ...item, isFavorite: !item.isFavorite };
-        } else {
-          return item;
-        }
-      }),
-    };
-    const updatedOrchid = { ...orchid, isFavorite: !orchid.isFavorite };
+  const saveFavorites = async (favoriteIds) => {
     try {
-      await axios.put(
-        `https://66755190a8d2b4d072ef8980.mockapi.io/Categories/${item.id}`,
-        updateOrginalData
-      );
-      setSelectItem(updatedOrchid);
-      setOrginalData(updateOrginalData);
-      triggerRefresh();
+      await AsyncStorage.setItem("favorites", JSON.stringify(favoriteIds));
+      setListFavorites(favoriteIds);
     } catch (error) {
-      console.error("Error toggling favorite:", error);
+      console.error("Error saving favorites to AsyncStorage:", error);
     }
+  };
+
+  const toggleFavorite = (orchid) => {
+    let updatedFavorites;
+    if (listFavorites.includes(orchid.id)) {
+      updatedFavorites = listFavorites.filter(id => id !== orchid.id);
+    } else {
+      updatedFavorites = [...listFavorites, orchid.id];
+    }
+    saveFavorites(updatedFavorites);
+    triggerRefresh();
   };
 
   const confirmDeleteOrchid = (orchidId) => {
@@ -86,7 +80,33 @@ const DetailScreen = ({ route, navigation }) => {
     );
   };
 
-  if (!selectItem) {
+  const handleDeleteOrchid = async (orchidId) => {
+    try {
+      const updatedCategory = {
+        ...item,
+        items: item.items.filter((orchid) => orchid.id !== orchidId),
+      };
+      await axios.put(
+        `${BASE_URL}/Categories/${item.id}`,
+        updatedCategory
+      );
+      // Remove from AsyncStorage
+      const newFavorites = listFavorites.filter((id) => id !== orchidId);
+      saveFavorites(newFavorites);
+      item.items = item.items.filter((orchid) => orchid.id !== orchidId);
+      setSelectItem(item.items[0] || null);
+      triggerRefresh();
+    } catch (error) {
+      console.error("Error deleting orchid:", error);
+    }
+  };
+
+  const handleSelectItem = (item) => {
+    setSelectItem(item);
+    loadFavorites();
+  };
+
+  if (loading) {
     return <Text>Loading...</Text>;
   }
 
@@ -139,9 +159,7 @@ const DetailScreen = ({ route, navigation }) => {
               >
                 <View style={styles.btnContainer}>
                   <MaterialIcons
-                    name={
-                      selectItem.isFavorite ? "favorite" : "favorite-outline"
-                    }
+                    name={ listFavorites.includes(selectItem.id) ? "favorite" : "favorite-outline"}
                     size={24}
                     color="red"
                   />
@@ -160,7 +178,7 @@ const DetailScreen = ({ route, navigation }) => {
       renderItem={({ item }) => (
         <OrchidItem
           item={item}
-          setSelectItem={setSelectItem}
+          setSelectItem={handleSelectItem}
           onDelete={() => confirmDeleteOrchid(item.id)}
         />
       )}
